@@ -5,23 +5,22 @@ using System.IO;
 
 namespace decompilation
 {
-    class theclan
+    class Theclan
     {
-        public static void unzip(string inFile, string inDir)
+        public static void Unzip(string inFile, string inDir)
         {
             string extractorPath = GetPathForExe("7zFM.exe");
-            extractorPath = extractorPath + "7z.exe";
+            extractorPath += "7z.exe";
             string command = "/C \"\"" + extractorPath + "\" e \"" + inFile + "\" -o\"" + inDir + "\\temp\" *.win -r\"";
             Process cmd = Process.Start("CMD.exe", command);
             cmd.WaitForExit();
         }
 
-        public static string[] decomp(string inFile)
+        public static string[] Decompile(string inFile)
         {
             FileStream file = new FileStream(inFile, FileMode.Open, FileAccess.Read);
             UndertaleData data = UndertaleIO.Read(file);
             var scrSetGlobalOptions = data.Scripts.ByName("scrSetGlobalOptions");
-            var vars = scrSetGlobalOptions.Code.FindReferencedVars();
             var locals = scrSetGlobalOptions.Code.Instructions;
             string instruction = "";
             for (int i = 0; i < locals.Count; i++)
@@ -29,7 +28,7 @@ namespace decompilation
                 if (locals[i].ToString().Contains("md5StrAdd"))
                 {
                     instruction = locals[i - 1].ToString();
-                    instruction = instruction.Substring(instruction.IndexOf('"') + 1);
+                    instruction = instruction[(instruction.IndexOf('"') + 1)..];
                     instruction = instruction.Remove(instruction.IndexOf('"'));
                     break;
                 }
