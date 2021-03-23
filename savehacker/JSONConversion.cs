@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -6,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace JSONConversion
 {
-    class Aconverter
+    class GMSWeird
     {
         public static string ToJSON(string input)
         {
@@ -144,7 +145,108 @@ namespace JSONConversion
         }
     }
 
-    class Bconverter
+    class GM8DSMaps
+    {
+        public static string ToJSON(string input)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("{ ");
+            int len = GMSDSMaps.ComputeStringLength(input.Substring(8, 8));
+            input = input.Remove(0, 16);
+            Queue<string> keys = new Queue<string>(len);
+            Queue<string> values = new Queue<string>(len);
+            for (int i = 0; i < len; i++)
+            {
+                int keylen = GMSDSMaps.ComputeStringLength(input.Substring(24, 8));
+                keys.Enqueue("\"" + GMSWeird.GMSstringtoJSON(input.Substring(32, 2 * keylen)) + "\"");
+                input = input.Remove(0, (keylen * 2) + 32);
+            }
+            for (int i = 0; i < len; i++)
+            {
+                switch (input.Substring(0, 8))
+                {
+                    case "00000000":
+                        values.Enqueue(GMSDSMaps.GMSdoubletoJSON(input.Substring(8, 16)));
+                        input = input.Remove(0, 32);
+                        break;
+                    case "01000000":
+                        int stringlen = 2 * GMSDSMaps.ComputeStringLength(input.Substring(24, 8));
+                        string str = GMSWeird.GMSstringtoJSON(input.Substring(32, stringlen));
+                        values.Enqueue("\"" + str + "\"");
+                        input = input.Remove(0, 32 + stringlen);
+                        break;
+                    default:
+                        throw new InvalidDataException("Unknown datatype, please go bug the dev.");
+                }
+            }
+            for (int i = 0; i < len; i++)
+            {
+                sb.Append(keys.Dequeue() + ": " + values.Dequeue() + ", ");
+            }
+            sb.Remove(sb.Length - 2, 2);
+            string result = sb.ToString();
+            return result + " }";
+        }
+
+        public static string FromJSON(string input)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("91010000");
+            input = input.TrimStart('{');
+            input = input.TrimEnd('}');
+            input = input.Trim();
+            string[] arr = input.Split(", ");
+            byte[] bytes = BitConverter.GetBytes((uint)arr.Length);
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                sb.Append(bytes[i].ToString("X2"));
+            }
+
+            Queue<string> keys = new Queue<string>(arr.Length);
+            Queue<string> values = new Queue<string>(arr.Length);
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                StringBuilder keysb = new StringBuilder();
+                StringBuilder valsb = new StringBuilder();
+                keysb.Append("010000000000000000000000");
+                string[] dict = arr[i].Split(": ");
+                bytes = BitConverter.GetBytes((uint)dict[0].Trim('\"').Length);
+                for (int j = 0; j < bytes.Length; j++)
+                {
+                    keysb.Append(bytes[j].ToString("X2"));
+                }
+                keysb.Append(GMSWeird.JSONtoGMSstring(dict[0].Trim('\"')));
+                if (dict[1].Contains("\""))
+                {
+                    valsb.Append("010000000000000000000000");
+                    bytes = BitConverter.GetBytes((uint)dict[1].Trim('\"').Length);
+                    for (int j = 0; j < bytes.Length; j++)
+                    {
+                        valsb.Append(bytes[j].ToString("X2"));
+                    }
+                    valsb.Append(GMSWeird.JSONtoGMSstring(dict[1].Trim('\"')));
+                }
+                else
+                {
+                    valsb.Append("00000000" + GMSDSMaps.JSONtoGMSdouble(dict[1]) + "00000000");
+                }
+                keys.Enqueue(keysb.ToString());
+                values.Enqueue(valsb.ToString());
+            }
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                sb.Append(keys.Dequeue());
+            }
+            for (int i = 0; i < arr.Length; i++)
+            {
+                sb.Append(values.Dequeue());
+            }
+            return sb.ToString();
+        }
+    }
+    class GMSDSMaps
     {
         public static string ToJSON(string input)
         {
@@ -156,7 +258,7 @@ namespace JSONConversion
                 input = input.Remove(0, 8);
                 int keylen = ComputeStringLength(input.Substring(0, 8));
                 input = input.Remove(0, 8);
-                sb.Append("\"" + Aconverter.GMSstringtoJSON(input.Substring(0, 2 * keylen)) + "\": ");
+                sb.Append("\"" + GMSWeird.GMSstringtoJSON(input.Substring(0, 2 * keylen)) + "\": ");
                 input = input.Remove(0, keylen * 2);
                 switch (input.Substring(0, 8))
                 {
@@ -170,7 +272,7 @@ namespace JSONConversion
                         break;
                     case "01000000":
                         int stringlen = 2 * ComputeStringLength(input.Substring(8, 8));
-                        string str = Aconverter.GMSstringtoJSON(input.Substring(16, stringlen));
+                        string str = GMSWeird.GMSstringtoJSON(input.Substring(16, stringlen));
                         sb.Append("\"" + str + "\"");
                         input = input.Remove(0, 16 + stringlen);
                         break;
@@ -208,7 +310,7 @@ namespace JSONConversion
                 {
                     sb.Append(bytes[j].ToString("X2"));
                 }
-                sb.Append(Aconverter.JSONtoGMSstring(dict[0].Trim('\"')));
+                sb.Append(GMSWeird.JSONtoGMSstring(dict[0].Trim('\"')));
                 if (dict[1].Contains("\""))
                 {
                     sb.Append("01000000");
@@ -217,7 +319,7 @@ namespace JSONConversion
                     {
                         sb.Append(bytes[j].ToString("X2"));
                     }
-                    sb.Append(Aconverter.JSONtoGMSstring(dict[1].Trim('\"')));
+                    sb.Append(GMSWeird.JSONtoGMSstring(dict[1].Trim('\"')));
                 }
                 else if (dict[1] == "true" || dict[1] == "false")
                 {

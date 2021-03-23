@@ -9,11 +9,19 @@ namespace savehacker
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args) //TODO IF DATA.WIN IN DIRECTORY DON'T UNZIP AND JUST USE THAT DATA.WIN
         {
-            Console.Write("Please drag the exe/win file of the game you want to save hack or your edited data txt file on this window: ");
-            string choice = Console.ReadLine();
-            choice = choice.Trim('"');
+            string choice;
+            if (args.Length == 1)
+            {
+                choice = args[0];
+            }
+            else
+            {
+                Console.Write("Please drag the exe/win file of the game you want to save hack or your edited data txt file on this window: ");
+                choice = Console.ReadLine();
+                choice = choice.Trim('"');
+            }
             string inDir = choice.Remove(choice.LastIndexOf('\\'));
             switch (choice.Substring(choice.LastIndexOf("."))) {
                 case ".exe":
@@ -29,9 +37,9 @@ namespace savehacker
             }
             Console.WriteLine("Press Enter to quit the program.");
             Console.ReadLine();
-            }
+        }
 
-        static void ReadSaveFile(string inFile, string inDir)
+        static void ReadSaveFile(string inFile, string inDir) //ALSO TODO ADD SUPPORT FOR K2W
         {
             //unzip/decompile game
             string[] array = new string[2];
@@ -84,11 +92,11 @@ namespace savehacker
                 StreamWriter outputfile = File.CreateText(inDir + @"\data" + choicenumber + ".txt");
                 if (Regex.Match(line, "^([13]:[0-9A-F]+:[0-9A-F]*,)+([13]:[0-9A-F]+:[0-9A-F]*)$").Success)
                 {
-                    line = JSONConversion.Aconverter.ToJSON(line);
+                    line = JSONConversion.GMSWeird.ToJSON(line);
                     outputfile.WriteLine("version = \"A\"");
                 } else if (Regex.Match(line, "^[0-9A-F]+$").Success)
                 {
-                    line = JSONConversion.Bconverter.ToJSON(line);
+                    line = JSONConversion.GMSDSMaps.ToJSON(line);
                     outputfile.WriteLine("version = \"B\"");
                 } else
                 {
@@ -149,10 +157,10 @@ namespace savehacker
             string mapmd5less = input.Remove(idx, 46); // 13 + 32 + 1
             if (version == "A")
             {
-                mapmd5less = JSONConversion.Aconverter.FromJSON(mapmd5less);
+                mapmd5less = JSONConversion.GMSWeird.FromJSON(mapmd5less);
             } else if (version == "B")
             {
-                mapmd5less = JSONConversion.Bconverter.FromJSON(mapmd5less);
+                mapmd5less = JSONConversion.GMSDSMaps.FromJSON(mapmd5less);
             }
 
             //append salt
@@ -179,10 +187,10 @@ namespace savehacker
             result = result.Insert(idx + 13, md5result);
             if (version == "A")
             {
-                result = JSONConversion.Aconverter.FromJSON(result);
+                result = JSONConversion.GMSWeird.FromJSON(result);
             } else if (version == "B")
             {
-                result = JSONConversion.Bconverter.FromJSON(result);
+                result = JSONConversion.GMSDSMaps.FromJSON(result);
             }
             return result;
         }
