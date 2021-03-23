@@ -76,7 +76,7 @@ namespace JSONConversion
         {
             while (value.Length < 16)
             {
-                value = value + "00";
+                value += "00";
             }
             byte[] doublebytes = new byte[8];
             for (int i = 0; 2 * i < value.Length; i++)
