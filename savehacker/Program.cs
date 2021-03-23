@@ -11,25 +11,17 @@ namespace savehacker
     {
         static void Main(string[] args) //TODO IF DATA.WIN IN DIRECTORY DON'T UNZIP AND JUST USE THAT DATA.WIN
         {
-            string choice;
-            if (args.Length == 1)
-            {
-                choice = args[0];
-            }
-            else
-            {
-                Console.Write("Please drag the exe/win file of the game you want to save hack or your edited data txt file on this window: ");
-                choice = Console.ReadLine();
-                choice = choice.Trim('"');
-            }
-            string inDir = choice.Remove(choice.LastIndexOf('\\'));
-            switch (choice.Substring(choice.LastIndexOf("."))) {
+            Console.Write("Please drag the exe/win file of the game you want to save hack or your edited data txt file on this window: ");
+            string choice = Console.ReadLine();
+            choice = choice.Trim('"');
+            switch (choice[choice.LastIndexOf(".")..]) {
                 case ".exe":
                 case ".win":
+                    string inDir = choice.Remove(choice.LastIndexOf('\\'));
                     ReadSaveFile(choice, inDir);
                     break;
                 case ".txt":
-                    WriteSaveFile(choice, inDir);
+                    WriteSaveFile(choice);
                     break;
                 default:
                     Console.WriteLine("Type 1 or 2 please :( the guy who programmed me is too lazy to work with anything else.");
@@ -42,14 +34,14 @@ namespace savehacker
         static void ReadSaveFile(string inFile, string inDir) //ALSO TODO ADD SUPPORT FOR K2W
         {
             //unzip/decompile game
-            string[] array = new string[2];
+            string[] array;
             if (inFile.Contains(".exe"))
             {
-                decompilation.theclan.unzip(inFile, inDir);
-                array = decompilation.theclan.decomp(inDir + @"\temp\data.win");
+                decompilation.Theclan.Unzip(inFile, inDir);
+                array = decompilation.Theclan.Decompile(inDir + @"\temp\data.win");
             } else if (inFile.Contains(".win"))
             {
-                array = decompilation.theclan.decomp(inFile);
+                array = decompilation.Theclan.Decompile(inFile);
             } else
             {
                 throw new ArgumentException("Please only .exe or .win files.");
@@ -112,19 +104,19 @@ namespace savehacker
             Console.WriteLine("Now edit the newly created data file(s) in the game's directory.");
         }
 
-        static void WriteSaveFile(string inFile, string inDir)
+        static void WriteSaveFile(string inFile)
         {
             //read data file
             StreamReader data = new StreamReader(inFile);
             string version = data.ReadLine();
-            version = version.Substring(version.IndexOf('"') + 1);
+            version = version[(version.IndexOf('"') + 1)..];
             version = version.Remove(version.IndexOf('"'));
             string json = data.ReadLine();
             string salt = data.ReadLine();
             string savefile = data.ReadLine();
-            salt = salt.Substring(salt.IndexOf('"') + 1);
+            salt = salt[(salt.IndexOf('"') + 1)..];
             salt = salt.Remove(salt.IndexOf('"'));
-            savefile = savefile.Substring(savefile.IndexOf('"') + 1);
+            savefile = savefile[(savefile.IndexOf('"') + 1)..];
             savefile = savefile.Remove(savefile.IndexOf('"'));
             string dir = savefile.Remove(savefile.LastIndexOf('\\'));
             data.Close();
@@ -164,7 +156,7 @@ namespace savehacker
             }
 
             //append salt
-            mapmd5less = mapmd5less + salt;
+            mapmd5less += salt;
 
             //utf-16le stuff
             Encoding u16LE = Encoding.Unicode;
