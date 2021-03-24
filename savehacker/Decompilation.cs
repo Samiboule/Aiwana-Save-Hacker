@@ -11,9 +11,28 @@ namespace decompilation
         {
             string extractorPath = GetPathForExe("7zFM.exe");
             extractorPath += "7z.exe";
-            string command = "/C \"\"" + extractorPath + "\" e \"" + inFile + "\" -o\"" + inDir + "\\temp\" *.win -r\"";
-            Process cmd = Process.Start("CMD.exe", command);
-            cmd.WaitForExit();
+
+            //Check if data.win exists in the exe, if not the game may be YYC'd
+            Process firstcmd = new Process();
+            ProcessStartInfo info = new ProcessStartInfo(extractorPath);
+            info.Arguments = "l \"" + inFile + "\"";
+            info.RedirectStandardOutput = true;
+            info.UseShellExecute = false;
+            firstcmd.StartInfo = info;
+            firstcmd.Start();
+            StreamReader reader = firstcmd.StandardOutput;
+            string output = reader.ReadToEnd();
+            firstcmd.WaitForExit();
+
+            if (output.Contains("data.win"))
+            {
+                string command = "/C \"\"" + extractorPath + "\" e \"" + inFile + "\" -o\"" + inDir + "\\temp\" *.win -r\"";
+                Process secondcmd = Process.Start("CMD.exe", command);
+                secondcmd.WaitForExit();
+            } else
+            {
+                throw new InvalidDataException("Could not find data.win file in the exe. Was this game compiled with YYC?");
+            }
         }
 
         public static string[] Decompile(string inFile)

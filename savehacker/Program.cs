@@ -9,7 +9,7 @@ namespace savehacker
 {
     class Program
     {
-        static void Main(string[] args) //TODO IF DATA.WIN IN DIRECTORY DON'T UNZIP AND JUST USE THAT DATA.WIN
+        static void Main(string[] args)
         {
             Console.Write("Please drag the exe/win file of the game you want to save hack or your edited data txt file on this window: ");
             string choice = Console.ReadLine();
@@ -31,14 +31,21 @@ namespace savehacker
             Console.ReadLine();
         }
 
-        static void ReadSaveFile(string inFile, string inDir) //ALSO TODO ADD SUPPORT FOR K2W
+        static void ReadSaveFile(string inFile, string inDir)
         {
             //unzip/decompile game
             string[] array;
             if (inFile.Contains(".exe"))
             {
-                decompilation.Theclan.Unzip(inFile, inDir);
-                array = decompilation.Theclan.Decompile(inDir + @"\temp\data.win");
+                string datawin = inDir + @"\data.win";
+                if (File.Exists(datawin))
+                {
+                    array = decompilation.Theclan.Decompile(datawin);
+                } else
+                {
+                    decompilation.Theclan.Unzip(inFile, inDir);
+                    array = decompilation.Theclan.Decompile(inDir + @"\temp\data.win");
+                }
             } else if (inFile.Contains(".win"))
             {
                 array = decompilation.Theclan.Decompile(inFile);
@@ -145,42 +152,49 @@ namespace savehacker
         static string GetMd5HashAndRecompose(string version, string input, string salt)
         {
             //delete md5 entry from json
+            string result = input;
             int idx = input.IndexOf(", \"mapMd5\": \"");
-            string mapmd5less = input.Remove(idx, 46); // 13 + 32 + 1
-            if (version == "A")
+            if (!(idx == -1))
             {
-                mapmd5less = JSONConversion.GMSWeird.FromJSON(mapmd5less);
-            } else if (version == "B")
-            {
-                mapmd5less = JSONConversion.GMSDSMaps.FromJSON(mapmd5less);
+                string mapmd5less = input.Remove(idx, 46); // 13 + 32 + 1
+                if (version == "A")
+                {
+                    mapmd5less = JSONConversion.GMSWeird.FromJSON(mapmd5less);
+                }
+                else if (version == "B")
+                {
+                    mapmd5less = JSONConversion.GMSDSMaps.FromJSON(mapmd5less);
+                }
+
+                //append salt
+                mapmd5less += salt;
+
+                //utf-16le stuff
+                Encoding u16LE = Encoding.Unicode;
+                byte[] bytes = u16LE.GetBytes(mapmd5less);
+
+                //md5 hash
+                MD5 md5 = MD5.Create();
+                byte[] hashBytes = md5.ComputeHash(bytes);
+
+                //to hex string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("x2"));
+                }
+                string md5result = sb.ToString();
+
+                //compose new md5 hash and save data json
+                result = input.Remove(idx + 13, 32);
+                result = result.Insert(idx + 13, md5result);
             }
 
-            //append salt
-            mapmd5less += salt;
-
-            //utf-16le stuff
-            Encoding u16LE = Encoding.Unicode;
-            byte[] bytes = u16LE.GetBytes(mapmd5less);
-
-            //md5 hash
-            MD5 md5 = MD5.Create();
-            byte[] hashBytes = md5.ComputeHash(bytes);
-
-            //to hex string
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hashBytes.Length; i++)
-            {
-                sb.Append(hashBytes[i].ToString("x2"));
-            }
-            string md5result = sb.ToString();
-
-            //compose new md5 hash and save data json
-            string result = input.Remove(idx + 13, 32);
-            result = result.Insert(idx + 13, md5result);
             if (version == "A")
             {
                 result = JSONConversion.GMSWeird.FromJSON(result);
-            } else if (version == "B")
+            }
+            else if (version == "B")
             {
                 result = JSONConversion.GMSDSMaps.FromJSON(result);
             }
