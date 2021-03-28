@@ -5,6 +5,9 @@ using System.IO;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
+//In the future this file should only figure out whether to go to the GMS or the GM8 part of the code
+//All the current GMS code should be moved to a GMS class or something along those lines
+
 namespace savehacker
 {
     class Program
@@ -190,6 +193,7 @@ namespace savehacker
                 result = result.Insert(idx + 13, md5result);
             }
 
+            //Branch depending on the format of the save file
             if (version == "A")
             {
                 result = JSONConversion.GMSWeird.FromJSON(result);
