@@ -5,7 +5,6 @@ In the future I might consider adding support for other types of games.
 
 ## Usage guide
 Double click the exe and follow the instructions.
-You can also use command line arguments to skip the initial step.
 
 ## TODO
 - Add support for more games (GM8?)

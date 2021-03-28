@@ -35,6 +35,7 @@ namespace decompilation
             }
         }
 
+        //Finding salt
         public static string[] Decompile(string inFile)
         {
             FileStream file = new FileStream(inFile, FileMode.Open, FileAccess.Read);
@@ -58,6 +59,7 @@ namespace decompilation
             return array;
         }
 
+        //Finding 7zip on the user's computer
         private const string keyBase = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         public static string GetPathForExe(string fileName)
         {
@@ -69,7 +71,6 @@ namespace decompilation
                 result = fileKey.GetValue("Path");
                 fileKey.Close();
             }
-
 
             return (string)result;
         }

@@ -4,10 +4,14 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
+//This file needs an overhaul
+//A lot of the classes call each other in a confusing manner
+//A lot of functions probably need better names
+//Hex conversion code was taken from elsewhere and could probably be improved for the purpose of this project
 
 namespace JSONConversion
 {
-    class GMSWeird
+    class GMSWeird //Rename this, I don't know what format this is yet
     {
         public static string ToJSON(string input)
         {
